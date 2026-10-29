@@ -1,10 +1,29 @@
 # RigUninstaller
 
-A Windows uninstaller that cleans up after itself, tells you what is risky to remove, and can undo what it did.
+**A free Windows uninstaller that finds the junk programs leave behind, warns you what is risky to remove, and keeps an undo list.**
 
-It removes programs with their own uninstallers, then helps you find and remove what they left behind. It also clears temp files and caches, manages startup items, and shows what is using your disk space. Built with C# / .NET 8 / WPF. No paid libraries, no telemetry.
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/Bubblez360/RigUninstaller)](https://github.com/Bubblez360/RigUninstaller/releases/latest)
+![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
+![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
+
+[**Download for Windows**](https://github.com/Bubblez360/RigUninstaller/releases/latest) · [How it works](#a-quick-tour) · [Safety rules](#safety-rules)
+
+When you uninstall a program, Windows often leaves files, folders and registry entries behind. RigUninstaller runs the program's own uninstaller, then scans for what is left, rates each item High, Medium or Low, and removes only what you tick. It also clears temp files and caches, manages startup items, and shows what is using your disk space.
 
 ![Programs tab, dark theme](docs/screenshots/programs-dark.png)
+
+<!-- Add the demo GIF or video here once it is recorded. -->
+
+**Why you can trust it**
+
+- Free and open source (MIT). The full source is in this repo, and you can build it yourself.
+- Nothing is deleted on its own. You tick it, or you press the button.
+- Uninstall cleanups can be undone: registry keys are exported to `.reg` files first, files go to the Recycle Bin, and a restore point is offered. The one exception is the Cleanup tab's temp and cache clearing, which is permanent and asks first.
+- Windows folders, drivers and the core registry keys are blocked by one safety gate.
+- No telemetry. It sends nothing anywhere unless you ask it to run `winget` or open a web search.
+- 800+ automated tests. Built with C#, .NET 8 and WPF, with no paid libraries.
+- Not code-signed yet, so Windows shows a SmartScreen warning on first run. [Here is how to check the download](#download).
 
 ## Highlights
 
