@@ -10,7 +10,7 @@ public sealed class DiskUsageRowViewModel
     public DiskUsageRowViewModel(DiskUsageEntry entry, long maxBytes, long totalBytes = 0)
     {
         Name = entry.Name;
-        Drive = entry.Drive;
+        Drive = entry.Drive == DiskUsage.UnknownDrive ? SizeFormatter.Unknown : entry.Drive; // a dash fits the narrow column
         Bytes = entry.Bytes;
         Maximum = Math.Max(1, maxBytes);
         SizeText = (entry.IsEstimated ? "~" : string.Empty) + SizeFormatter.Format(entry.Bytes);
@@ -442,7 +442,9 @@ public sealed class DiskUsageViewModel : ViewModelBase, ITabViewModel
         StatusText = shown.Count == 0
             ? (_entries.Count == 0 ? "No sizes are known yet." : $"No programs with a known size on {where}.")
             : $"Top {top.Count} of {(_selectedDrive is null ? _programs.Count : shown.Count)} programs. A ~ means the size was measured from the install folder."
-              + (unmeasured > 0 && _selectedDrive is null ? $" {unmeasured} report no size and are left out." : string.Empty);
+              + (unmeasured > 0 && _selectedDrive is null
+                  ? (unmeasured == 1 ? " 1 program reports no size and is left out." : $" {unmeasured} programs report no size and are left out.")
+                  : string.Empty);
     }
 
     /// <summary>Measures what is inside a folder (a drive root to begin with) and shows it biggest first.</summary>

@@ -117,8 +117,12 @@
                                 <TextBlock Text="{Binding SelectionDetail}" FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                            TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectionDetail}" Margin="0,1,0,0" />
                                 <!-- Warning for the selected program: text and a symbol, not colour alone -->
-                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0"
-                                            Visibility="{Binding HasSelectionRisk, Converter={StaticResource BoolToVis}}">
+                                <!-- A grid, not a horizontal panel: the text gets a real width, so it can end in an ellipsis -->
+                                <Grid Margin="0,3,0,0" Visibility="{Binding HasSelectionRisk, Converter={StaticResource BoolToVis}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
                                     <TextBlock Text="&#xE7BA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
                                                VerticalAlignment="Center" Margin="0,0,6,0">
                                         <TextBlock.Style>
@@ -132,8 +136,8 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <TextBlock Text="{Binding SelectionRisk}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                               ToolTip="{Binding SelectionRisk}" MaxWidth="900">
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectionRisk}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding SelectionRisk}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{DynamicResource WarnBrush}" />
@@ -145,7 +149,7 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                </StackPanel>
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0"
