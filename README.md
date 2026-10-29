@@ -22,21 +22,31 @@ It removes programs with their own uninstallers, then helps you find and remove 
 
 ![Programs tab, light theme](docs/screenshots/programs-light.png)
 
+## Download
+
+1. Open the [**latest release**](https://github.com/Bubblez360/RigUninstaller/releases/latest) and download `RigUninstaller-v…-win-x64.zip` (about 64 MB).
+2. Unzip it to a normal folder, for example `C:\Tools\RigUninstaller`.
+3. Double-click `RigUninstaller.exe` and answer **Yes** to the Windows permission prompt.
+
+There is nothing to install: the .NET runtime is inside the exe, so the first start takes a few seconds longer.
+
+**"Windows protected your PC"?** The exe is not code-signed yet, so Windows warns about every new unsigned program. Click **More info**, then **Run anyway**. You can check the download first: compare its SHA-256 with the one on the release page (`Get-FileHash <file>` in PowerShell), or upload the file to [VirusTotal](https://www.virustotal.com). The full source code is in this repo.
+
 ## Requirements
 
 - Windows 10 or 11, 64-bit
-- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (to run); the .NET 8 SDK (to build)
 - Administrator rights. The app asks for them when it starts (UAC prompt), because uninstallers and registry changes need them.
+- To build from source only: the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). The downloaded zip needs nothing.
 
-## Get it running
+## Build it yourself
 
-Build a single exe:
+The download zip is made by `tools\make-release.ps1` (self-contained, single file, with checksums). For a smaller build that needs the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) installed:
 
 ```
 publish.cmd
 ```
 
-It writes `publish\RigUninstaller.exe`. Windows SmartScreen may warn about it, because the exe is not code-signed. Run from source instead, in an **administrator** terminal:
+It writes `publish\RigUninstaller.exe`. Or run from source, in an **administrator** terminal:
 
 ```
 dotnet run --project src\RigUninstaller

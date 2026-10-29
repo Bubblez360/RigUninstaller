@@ -2,6 +2,7 @@
 bin/
 obj/
 publish*/
+dist/
 TestResults/
 
 # Editor and user files

@@ -8,7 +8,15 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>RigUninstaller</RootNamespace>
     <AssemblyName>RigUninstaller</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
+    <!-- Shown in the exe's Properties > Details tab, which is also what people check before they trust a download. -->
+    <Product>RigUninstaller</Product>
+    <Authors>Bubblez360</Authors>
+    <Company>Bubblez360</Company>
+    <Copyright>Copyright (c) 2026 Bubblez360. MIT License.</Copyright>
+    <Description>Windows uninstaller that finds leftovers, warns about risky removals, cleans temp files and caches, and can undo what it did.</Description>
+    <RepositoryUrl>https://github.com/Bubblez360/RigUninstaller</RepositoryUrl>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Always ask for administrator rights (UAC prompt on start). -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- The exe, the taskbar and every window use this icon (tools\make-icon.ps1 makes it). -->
