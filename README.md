@@ -104,6 +104,14 @@ Next to the exe, in `Data\` (so a new build in a new folder starts with an empty
 - The signature column leaves Windows components blank, because Windows protects them with catalog signatures.
 - RigUninstaller itself sends nothing anywhere. It only runs `winget` and opens web searches when you ask it to.
 
+## Support
+
+RigUninstaller is free, and made by one person in their spare time. If it saved you time or cleaned up a mess, you can say thanks on Ko-fi. It is never required and nothing in the app is locked behind it.
+
+[**Support on Ko-fi**](https://ko-fi.com/bubzwot)
+
+Bug reports and ideas are just as welcome: open an issue and say what you saw (the log from the **View log** button helps).
+
 ## For developers
 
 ```
@@ -122,3 +130,7 @@ Design notes:
 - Real uninstallers, restore points, winget uninstalls and cache cleaning only ever run behind interfaces with fakes in tests. Tests that touch the machine only read it, or use their own temporary folders and keys.
 - Both color themes are checked by a test for WCAG contrast (4.5:1 for text) and must define the same keys.
 - To change the app icon: `powershell -File tools\make-icon.ps1 -Source <picture>`, then run `publish.cmd`.
+
+## License
+
+[MIT](LICENSE). Use it, change it, share it; just keep the copyright notice. It comes with no warranty, so read the confirmation dialogs before you delete things.
