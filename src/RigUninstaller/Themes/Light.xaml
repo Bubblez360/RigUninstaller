@@ -1,0 +1,24 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Light palette. Dark.xaml must define exactly the same keys. -->
+    <SolidColorBrush x:Key="WindowBgBrush" Color="#F3F4F7" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#E9ECF2" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#D3D8E1" />
+    <SolidColorBrush x:Key="TextBrush" Color="#1A1F29" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#5B6474" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#2A62D6" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#DDE2EC" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#CBD2E0" />
+    <SolidColorBrush x:Key="DividerBrush" Color="#E6E9EF" />
+    <SolidColorBrush x:Key="RowHoverBrush" Color="#F1F4F9" />
+    <SolidColorBrush x:Key="SelectedRowBrush" Color="#DCE7FB" />
+    <SolidColorBrush x:Key="BloatRowBrush" Color="#FFF3DC" />
+    <SolidColorBrush x:Key="ScrimBrush" Color="#D9F3F4F7" />
+    <SolidColorBrush x:Key="OkBrush" Color="#1E8449" />
+    <SolidColorBrush x:Key="WarnBrush" Color="#8A5600" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#B3261E" />
+    <!-- Outline of inputs: at least 3:1 against the surface, so the field can be found -->
+    <SolidColorBrush x:Key="ControlBorderBrush" Color="#7C8697" />
+</ResourceDictionary>

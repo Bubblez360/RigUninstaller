@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>RigUninstaller</RootNamespace>
+    <AssemblyName>RigUninstaller</AssemblyName>
+    <Version>0.1.0</Version>
+    <!-- Always ask for administrator rights (UAC prompt on start). -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The exe, the taskbar and every window use this icon (tools\make-icon.ps1 makes it). -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\no-icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WPF's implicit usings leave out System.IO. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+</Project>

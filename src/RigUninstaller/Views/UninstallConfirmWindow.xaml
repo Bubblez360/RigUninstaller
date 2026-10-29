@@ -1,0 +1,44 @@
+<Window x:Class="RigUninstaller.Views.UninstallConfirmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Confirm uninstall"
+        Width="580" SizeToContent="Height" ResizeMode="NoResize"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Style="{StaticResource AppWindow}">
+    <StackPanel Margin="28,26,28,22">
+        <TextBlock Text="{Binding Heading}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding Details}" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
+
+        <TextBlock Text="The program's own uninstaller will run this command:" Margin="0,18,0,6"
+                   Foreground="{DynamicResource TextMutedBrush}" />
+        <Border Padding="12,10" CornerRadius="8" Background="{DynamicResource SurfaceAltBrush}">
+            <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                     FontFamily="Consolas" FontSize="12" BorderThickness="0" Background="Transparent"
+                     Foreground="{DynamicResource TextBrush}"
+                     AutomationProperties.Name="Uninstall command" />
+        </Border>
+
+        <CheckBox Content="Quiet uninstall (no windows, no questions)" Margin="0,20,0,0"
+                  IsChecked="{Binding Quiet}" IsEnabled="{Binding CanToggleQuiet}" />
+        <TextBlock Text="This program has no silent uninstall command." Margin="28,3,0,0" FontSize="12"
+                   Foreground="{DynamicResource TextMutedBrush}"
+                   Visibility="{Binding QuietUnavailable, Converter={StaticResource BoolToVis}}" />
+
+        <CheckBox Content="Create a System Restore point first (recommended)" Margin="0,14,0,0"
+                  IsChecked="{Binding CreateRestorePoint}" />
+        <TextBlock Text="Takes a few seconds. Windows makes at most one restore point every 24 hours."
+                   Margin="28,3,0,0" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextMutedBrush}" />
+
+        <CheckBox Content="Scan the install folder with Microsoft Defender first" Margin="0,14,0,0"
+                  IsChecked="{Binding ScanWithDefender}"
+                  Visibility="{Binding DefenderAvailable, Converter={StaticResource BoolToVis}}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,26,0,0">
+            <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" IsDefault="True"
+                    Style="{StaticResource AppButton}" MinWidth="96" />
+            <Button Content="Uninstall" Command="{Binding ConfirmCommand}" Tag="primary"
+                    Style="{StaticResource AppButton}" MinWidth="96" Margin="10,0,0,0" />
+        </StackPanel>
+    </StackPanel>
+</Window>

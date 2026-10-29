@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+publish*/
+TestResults/
+
+# Editor and user files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# What the app writes while it runs (logs, backups, settings): never source
+Data/
+
+# Local tooling
+.claude/
+graphify-out/
