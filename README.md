@@ -21,7 +21,7 @@ When you uninstall a program, Windows often leaves files, folders and registry e
 - Nothing is deleted on its own. You tick it, or you press the button.
 - Uninstall cleanups can be undone: registry keys are exported to `.reg` files first, files go to the Recycle Bin, and a restore point is offered. The one exception is the Cleanup tab's temp and cache clearing, which is permanent and asks first.
 - Windows folders, drivers and the core registry keys are blocked by one safety gate.
-- No telemetry. It sends nothing anywhere unless you ask it to run `winget` or open a web search.
+- It doesn't track you. It sends nothing anywhere unless you ask it to run `winget` or open a web search.
 - 800+ automated tests. Built with C#, .NET 8 and WPF, with no paid libraries.
 - Not code-signed yet, so Windows shows a SmartScreen warning on first run. [Here is how to check the download](#download).
 
