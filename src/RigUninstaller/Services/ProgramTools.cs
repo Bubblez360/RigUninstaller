@@ -195,12 +195,9 @@ public sealed class ExternalActions : IExternalActions
     public void OpenFile(string path) => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
 }
 
-/// <summary>Which program a window on screen belongs to (the "target mode" crosshair).</summary>
+/// <summary>Which windows are open on the desktop, and which exe owns each.</summary>
 public interface IWindowProbe
 {
-    /// <summary>Path of the exe that owns the window under the mouse. Null for this app or when it cannot be read.</summary>
-    string? GetProcessPathAtCursor();
-
     /// <summary>The windows you can see on the desktop right now, one per program, topmost first. No aiming needed.</summary>
     IReadOnlyList<OpenWindow> ListOpenWindows();
 }
@@ -210,7 +207,6 @@ public sealed record OpenWindow(string Title, string ExePath);
 
 public sealed class WindowProbe : IWindowProbe
 {
-    private const uint GaRoot = 2;
     private const uint GwOwner = 4;
     private const uint ProcessQueryLimitedInformation = 0x1000;
     private const int GwlExStyle = -20;
@@ -299,45 +295,8 @@ public sealed class WindowProbe : IWindowProbe
         }
     }
 
-    public string? GetProcessPathAtCursor()
-    {
-        if (!NativeMethods.GetCursorPos(out var point))
-        {
-            return null;
-        }
-
-        var window = NativeMethods.WindowFromPoint(point);
-        if (window == IntPtr.Zero)
-        {
-            return null;
-        }
-
-        var root = NativeMethods.GetAncestor(window, GaRoot);
-        NativeMethods.GetWindowThreadProcessId(root == IntPtr.Zero ? window : root, out var processId);
-        if (processId == 0 || processId == Environment.ProcessId)
-        {
-            return null;
-        }
-
-        return ReadImagePath(processId);
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct NativePoint
-    {
-        public int X;
-        public int Y;
-    }
-
     private static class NativeMethods
     {
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetCursorPos(out NativePoint point);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr WindowFromPoint(NativePoint point);
-
         public delegate bool EnumWindowsProc(IntPtr window, IntPtr parameter);
 
         [DllImport("user32.dll")]
@@ -362,9 +321,6 @@ public sealed class WindowProbe : IWindowProbe
 
         [DllImport("dwmapi.dll")]
         public static extern int DwmGetWindowAttribute(IntPtr window, int attribute, out int value, int size);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetAncestor(IntPtr window, uint flags);
 
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);

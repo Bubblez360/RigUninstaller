@@ -37,13 +37,14 @@ public static class ProgramListQuery
         string? query,
         SortColumn column,
         bool descending,
-        Func<InstalledProgram, DateTime?>? lastUsed = null)
+        Func<InstalledProgram, DateTime?>? lastUsed = null,
+        Func<InstalledProgram, bool>? include = null)
     {
         ArgumentNullException.ThrowIfNull(programs);
 
         // "Last used" is not part of the registry data, so the caller says where to find it.
         var used = lastUsed ?? (_ => null);
-        var filtered = programs.Where(p => Matches(p, query)).ToList();
+        var filtered = programs.Where(p => Matches(p, query) && (include?.Invoke(p) ?? true)).ToList();
         var comparer = Comparer<InstalledProgram>.Create((a, b) => Compare(a, b, column, descending, used));
 
         var known = filtered.Where(p => HasValue(p, column, used)).OrderBy(p => p, comparer);

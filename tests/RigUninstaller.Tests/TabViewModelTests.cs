@@ -305,15 +305,6 @@ public class DiskUsageViewModelTests
 public class WindowProbeTests
 {
     [Fact]
-    public void Asking_for_the_window_under_the_cursor_never_throws()
-    {
-        // The answer depends on where the mouse is; the call itself must always be safe.
-        var path = new WindowProbe().GetProcessPathAtCursor();
-
-        Assert.True(path is null || Path.IsPathRooted(path));
-    }
-
-    [Fact]
     public void Listing_open_windows_returns_titled_windows_with_real_exe_paths_and_no_duplicates()
     {
         // Read-only: asks Windows which windows are open; the content depends on the machine.

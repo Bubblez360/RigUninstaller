@@ -467,36 +467,47 @@ public class MainViewModelFeatureTests : VmTestBase
         Assert.False(vm.WingetUninstallCommand.CanExecute(null));
     }
 
-    // ---- target mode ----
+    // ---- open windows ----
 
     [Fact]
-    public async Task Target_mode_selects_the_program_that_owns_the_window_and_clears_a_hiding_search()
+    public async Task Picking_an_open_window_selects_its_program_and_clears_a_search_or_filter_that_hides_it()
     {
-        var vm = await ScannedAsync(Program("Alpha", location: @"C:\Program Files\Alpha"), Program("Beta", location: @"C:\Program Files\Beta"));
+        var vm = await ScannedAsync(
+            Program("Alpha", location: @"C:\Program Files\Alpha", sizeKb: 10),
+            Program("Beta", location: @"C:\Program Files\Beta", sizeKb: 2_000_000));
         vm.SearchText = "beta";
-        _windowProbe.Path = @"C:\Program Files\Alpha\alpha.exe";
+        vm.SetQuickFilterCommand.Execute(QuickFilter.Large);
         ProgramRowViewModel? revealed = null;
         vm.RowRevealRequested += row => revealed = row;
 
-        vm.LocateWindowUnderCursor();
+        vm.SelectProgramOfWindow(new OpenWindowChoice("Alpha - notes", @"C:\Program Files\Alpha\alpha.exe", "Alpha"));
 
         Assert.Equal("Alpha", vm.SelectedRow?.Name);
         Assert.Equal("Alpha", revealed?.Name);
         Assert.Equal("", vm.SearchText);
+        Assert.Equal(QuickFilter.All, vm.QuickFilter);
         Assert.Contains("alpha.exe belongs to Alpha", vm.StatusText);
     }
 
     [Fact]
-    public async Task Target_mode_says_so_when_the_window_cannot_be_identified_or_matches_nothing()
+    public async Task Picking_an_open_window_keeps_the_filter_when_the_program_is_already_shown()
+    {
+        var vm = await ScannedAsync(Program("Beta", location: @"C:\Program Files\Beta", sizeKb: 2_000_000));
+        vm.SetQuickFilterCommand.Execute(QuickFilter.Large);
+
+        vm.SelectProgramOfWindow(new OpenWindowChoice("Beta", @"C:\Program Files\Beta\beta.exe", "Beta"));
+
+        Assert.Equal(QuickFilter.Large, vm.QuickFilter);
+        Assert.Equal("Beta", vm.SelectedRow?.Name);
+    }
+
+    [Fact]
+    public async Task Picking_an_open_window_says_so_when_it_matches_no_installed_program()
     {
         var vm = await ScannedAsync(Program("Alpha", location: @"C:\Program Files\Alpha"));
 
-        _windowProbe.Path = null;
-        vm.LocateWindowUnderCursor();
-        Assert.Contains("not a program I can identify", vm.StatusText);
+        vm.SelectProgramOfWindow(new OpenWindowChoice("Thing", @"D:\Elsewhere\thing.exe", null));
 
-        _windowProbe.Path = @"D:\Elsewhere\thing.exe";
-        vm.LocateWindowUnderCursor();
         Assert.Contains("does not belong to an installed program", vm.StatusText);
         Assert.Null(vm.SelectedRow);
     }

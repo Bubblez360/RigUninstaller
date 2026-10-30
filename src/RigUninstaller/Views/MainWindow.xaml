@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:RigUninstaller.Views"
         xmlns:helpers="clr-namespace:RigUninstaller.Helpers"
+        xmlns:svc="clr-namespace:RigUninstaller.Services"
         Title="RigUninstaller"
         Width="1280" Height="760" MinWidth="900" MinHeight="520"
         WindowStartupLocation="CenterScreen"
-        PreviewKeyDown="OnWindowPreviewKeyDown"
         Style="{StaticResource AppWindow}">
     <Window.InputBindings>
         <!-- Ctrl+F jumps to the search box (handled in code-behind: it is pure focus handling). -->
@@ -162,22 +162,25 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button x:Name="TargetButton" Style="{StaticResource AppButton}" Padding="12,6" Margin="0,0,8,0"
-                                        PreviewMouseLeftButtonDown="OnTargetMouseDown" PreviewMouseLeftButtonUp="OnTargetMouseUp"
-                                        LostMouseCapture="OnTargetLostCapture"
-                                        AutomationProperties.Name="Find a program by its window"
-                                        ToolTip="Hold and drag onto any open window, then let go. Or click once, then click the window. Esc cancels. Its program is selected in the list.">
+                                <!-- Ready-made views of the list (the menu itself is built in code-behind from QuickFilters) -->
+                                <Button x:Name="QuickFilterButton" Padding="12,6" Margin="0,0,8,0" Click="OnQuickFilterClick"
+                                        AutomationProperties.Name="Quick filter"
+                                        ToolTip="{Binding QuickFilterHint}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource AppButton}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsQuickFilterActive}" Value="True">
+                                                    <Setter Property="Tag" Value="primary" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
                                     <StackPanel Orientation="Horizontal">
-                                        <Path Width="16" Height="16" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.4" VerticalAlignment="Center">
-                                            <Path.Data>
-                                                <GeometryGroup>
-                                                    <EllipseGeometry Center="8,8" RadiusX="5" RadiusY="5" />
-                                                    <LineGeometry StartPoint="8,0" EndPoint="8,16" />
-                                                    <LineGeometry StartPoint="0,8" EndPoint="16,8" />
-                                                </GeometryGroup>
-                                            </Path.Data>
-                                        </Path>
-                                        <TextBlock Text="Find by window" Margin="8,0,0,0" />
+                                        <!-- A funnel -->
+                                        <Path Data="M1,2 L15,2 L9.5,8.5 L9.5,14 L6.5,12.5 L6.5,8.5 Z" Width="16" Height="16"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                              StrokeThickness="1.4" StrokeLineJoin="Round" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding QuickFilterButtonText}" Margin="8,0,0,0" MaxWidth="260" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
                                 </Button>
 
@@ -423,11 +426,17 @@
                                             Visibility="{Binding HasNoResults, Converter={StaticResource BoolToVis}}">
                                     <TextBlock Text="{Binding NoResultsText}" FontSize="15" FontWeight="SemiBold"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="Check the spelling, or try part of the publisher or version."
+                                    <TextBlock Text="{Binding NoResultsAdvice}"
                                                Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0"
-                                               HorizontalAlignment="Center" />
-                                    <Button Content="Clear search" Command="{Binding ClearSearchCommand}"
-                                            Style="{StaticResource AppButton}" Margin="0,16,0,0" HorizontalAlignment="Center" />
+                                               HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="520" TextAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                                        <Button Content="Clear search" Command="{Binding ClearSearchCommand}"
+                                                Style="{StaticResource AppButton}" Margin="0,0,8,0" />
+                                        <Button Content="Show all programs" Command="{Binding SetQuickFilterCommand}"
+                                                CommandParameter="{x:Static svc:QuickFilter.All}"
+                                                Style="{StaticResource AppButton}"
+                                                Visibility="{Binding IsQuickFilterActive, Converter={StaticResource BoolToVis}}" />
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- First scan still running: grey placeholder rows keep the page's shape -->

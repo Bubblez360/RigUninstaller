@@ -87,7 +87,8 @@ dotnet test
 | **Uninstall** | Confirmation first, then the program's own uninstaller (`msiexec /x` for MSI). Optional quiet uninstall, restore point and Microsoft Defender scan. Warns if the program is running. |
 | **Leftovers window** | After an uninstall: items that match the program or its publisher, rated High, Medium or Low. Low is hidden by default. |
 | **Force remove** | Right-click. For programs whose uninstaller is missing or broken: removes the registry entry and the install folder, after a strong warning. |
-| **Find by window** | Hold the crosshair button and drag onto any open window (or click it, then click the window). Its program is selected in the list. |
+| **Open windows** | Lists the windows open right now, one per program. Pick one and its program is selected in the list. No aiming needed. |
+| **Quick filter** | One click for the questions people actually ask: what did I install lately, what have I not used for 6+ months, what takes 500 MB or more, what is risky to remove, which entries are broken, what is on my bloatware list. Works together with the search box. Read-only. |
 | **Track new install** | Take a snapshot, install something, finish tracking: the exact changes are saved and linked to the program, so its leftovers are removed precisely later. |
 | **Disk usage** | Every drive with used and free space, folder-by-folder browsing, and a chart of the biggest programs with a button per drive and totals. Read-only. |
 | **Store apps** | Lists Microsoft Store apps with their icons; remove them (frameworks and Windows' own packages are protected). |

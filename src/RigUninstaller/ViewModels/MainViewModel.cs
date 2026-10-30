@@ -24,6 +24,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private IReadOnlyList<ProgramRowViewModel> _rows = Array.Empty<ProgramRowViewModel>();
     private ProgramRowViewModel? _selectedRow;
     private string _searchText = string.Empty;
+    private QuickFilter _quickFilter = QuickFilter.All;
     private SortColumn _sortColumn = SortColumn.Name;
     private bool _sortDescending;
     private string _statusText = "Ready.";
@@ -63,6 +64,7 @@ public sealed partial class MainViewModel : ViewModelBase
         ScanCommand = new AsyncRelayCommand(_ => ScanAsync(), _ => !IsUninstalling);
         ClearSearchCommand = new RelayCommand(_ => SearchText = string.Empty, _ => SearchText.Length > 0);
         SortCommand = new RelayCommand(SortBy);
+        SetQuickFilterCommand = new RelayCommand(SetQuickFilter);
         UninstallCommand = new AsyncRelayCommand(_ => UninstallAsync(), _ => CanActOnSelection() && SelectedRow is { IsKept: false });
         StopWaitingCommand = new RelayCommand(_ => _uninstallCts?.Cancel(), _ => IsUninstalling && CanStopWaiting);
         InitializeTools();
@@ -141,6 +143,27 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>The ready-made view chosen in the Quick filter menu. It works together with the search box.</summary>
+    public QuickFilter QuickFilter
+    {
+        get => _quickFilter;
+        private set
+        {
+            if (SetProperty(ref _quickFilter, value))
+            {
+                OnPropertyChanged(nameof(IsQuickFilterActive));
+                OnPropertyChanged(nameof(QuickFilterButtonText));
+                OnPropertyChanged(nameof(QuickFilterHint));
+            }
+        }
+    }
+
+    public bool IsQuickFilterActive => _quickFilter != QuickFilter.All;
+
+    public string QuickFilterButtonText => IsQuickFilterActive ? "Filter: " + QuickFilters.Label(_quickFilter) : "Quick filter";
+
+    public string QuickFilterHint => QuickFilters.Hint(_quickFilter);
+
     public SortColumn SortColumn
     {
         get => _sortColumn;
@@ -211,7 +234,27 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>True when programs exist but the search matches none of them.</summary>
     public bool HasNoResults => !IsScanning && _programs.Count > 0 && _rows.Count == 0;
 
-    public string NoResultsText => $"No programs match \"{SearchText.Trim()}\".";
+    /// <summary>The line under <see cref="NoResultsText"/>: what the active filter means, or search advice.</summary>
+    public string NoResultsAdvice => IsQuickFilterActive
+        ? QuickFilters.Hint(_quickFilter)
+        : "Check the spelling, or try part of the publisher or version.";
+
+    public string NoResultsText
+    {
+        get
+        {
+            var search = SearchText.Trim();
+            if (!IsQuickFilterActive)
+            {
+                return $"No programs match \"{search}\".";
+            }
+
+            // Last used and broken entries come from the background check, which may still be running.
+            var checking = _quickFilter is QuickFilter.NotUsedLately or QuickFilter.Broken && _rowCache.Values.Any(r => r.Insight is null);
+            var scope = search.Length > 0 ? $"\"{search}\" and the filter \"{QuickFilters.Label(_quickFilter)}\"" : $"the filter \"{QuickFilters.Label(_quickFilter)}\"";
+            return $"No programs match {scope}." + (checking ? " Still checking your programs, give it a moment." : string.Empty);
+        }
+    }
 
     /// <summary>True during the first scan, while there is nothing to show yet.</summary>
     public bool ShowScanningHint => IsScanning && _programs.Count == 0;
@@ -259,6 +302,9 @@ public sealed partial class MainViewModel : ViewModelBase
 
     /// <summary>Parameter is a <see cref="Models.SortColumn"/> name. Same column flips direction, a new one starts A-Z.</summary>
     public RelayCommand SortCommand { get; }
+
+    /// <summary>Picks a <see cref="QuickFilter"/>; the parameter is the filter itself.</summary>
+    public RelayCommand SetQuickFilterCommand { get; }
 
     public AsyncRelayCommand ScanCommand { get; }
 
@@ -532,7 +578,10 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private void RebuildRows()
     {
-        var visible = ProgramListQuery.Apply(_programs, SearchText, SortColumn, SortDescending, p => _rowCache.TryGetValue(p, out var row) ? row.Insight?.LastUsed.When : null);
+        var visible = ProgramListQuery.Apply(
+            _programs, SearchText, SortColumn, SortDescending,
+            p => _rowCache.TryGetValue(p, out var row) ? row.Insight?.LastUsed.When : null,
+            IsQuickFilterActive ? PassesQuickFilter : null);
         var rows = visible.Select(p => _rowCache[p]).ToList();
         Rows = rows;
 
@@ -557,7 +606,7 @@ public sealed partial class MainViewModel : ViewModelBase
         var size = SizeFormatter.Format(_rows.Sum(r => r.Program.SizeBytes ?? 0));
 
         string summary;
-        if (SearchText.Trim().Length == 0)
+        if (SearchText.Trim().Length == 0 && !IsQuickFilterActive)
         {
             summary = $"{total} {noun}  |  {size} total";
         }
@@ -567,6 +616,10 @@ public sealed partial class MainViewModel : ViewModelBase
             summary = _rows.Count == 0
                 ? $"0 of {total} {noun}"
                 : $"{_rows.Count} of {total} {noun}  |  {size} shown";
+            if (IsQuickFilterActive)
+            {
+                summary += $"  |  {QuickFilters.Label(_quickFilter)}";
+            }
         }
 
         StatusText = _note is null ? summary : $"{summary}  |  {_note}";
@@ -593,6 +646,25 @@ public sealed partial class MainViewModel : ViewModelBase
 
         RebuildRows();
         SaveSettings(s => s with { SortColumn = SortColumn.ToString(), SortDescending = SortDescending });
+    }
+
+    private void SetQuickFilter(object? parameter)
+    {
+        if (parameter is not QuickFilter filter || !Enum.IsDefined(filter))
+        {
+            return;
+        }
+
+        QuickFilter = filter;
+        RebuildRows();
+        _log.Info($"Quick filter: {QuickFilters.Label(filter)} ({_rows.Count} of {_programs.Count} programs)");
+    }
+
+    private bool PassesQuickFilter(InstalledProgram program)
+    {
+        var row = _rowCache[program];
+        var facts = new QuickFilterFacts(program, row.Insight?.LastUsed.When, row.HasRisk, row.IsOrphan, row.IsBloat);
+        return QuickFilters.Matches(_quickFilter, facts, DateTime.Now);
     }
 
     /// <summary>The settings read at start-up (the window uses them to come back where it was).</summary>
@@ -649,6 +721,7 @@ public sealed partial class MainViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasNoResults));
         OnPropertyChanged(nameof(NoResultsText));
+        OnPropertyChanged(nameof(NoResultsAdvice));
         OnPropertyChanged(nameof(ShowScanningHint));
     }
 

@@ -12,14 +12,11 @@ namespace RigUninstaller.Views;
 
 /// <summary>
 /// View-only behaviour that XAML cannot express: focus handling, keeping the grid's sort arrows in step with the
-/// view model, selecting the row under a right click, and the mouse capture for target mode.
+/// view model, selecting the row under a right click, and building the Quick filter and Open windows menus.
 /// All real logic (search, sort, selection, uninstall) lives in MainViewModel.
 /// </summary>
 public partial class MainWindow : Window
 {
-    private bool _targeting;
-    private bool _waitingForClick;
-
     public MainWindow()
     {
         InitializeComponent();
@@ -178,74 +175,40 @@ public partial class MainWindow : Window
         }
     }
 
-    // ---- target mode: press the crosshair, drag onto any window, let go ----
+    // ---- quick filter ----
 
-    // Two ways to use it: press, drag onto a window and let go; or click once, then click the window.
-    // The mouse stays captured until the window is picked, so the click never reaches the program being picked.
-
-    private void OnTargetMouseDown(object sender, MouseButtonEventArgs e)
+    /// <summary>Opens the Quick filter menu under its button. Built here from <see cref="QuickFilters"/>, so the wording lives in one place.</summary>
+    private void OnQuickFilterClick(object sender, RoutedEventArgs e)
     {
-        if (!_targeting && Mouse.Capture(TargetButton))
-        {
-            _targeting = true;
-            Mouse.OverrideCursor = Cursors.Cross;
-        }
-
-        e.Handled = true;
-    }
-
-    private void OnTargetMouseUp(object sender, MouseButtonEventArgs e)
-    {
-        if (!_targeting)
+        if (ViewModel is not { } viewModel)
         {
             return;
         }
 
-        e.Handled = true;
-
-        // A plain click on the button itself (not a drag): keep the crosshair and wait for the next click.
-        // (IsMouseOver stays true while the button holds the mouse, so the real position is compared with its bounds.)
-        var position = e.GetPosition(TargetButton);
-        var releasedOnButton = position.X >= 0 && position.Y >= 0
-                               && position.X <= TargetButton.ActualWidth && position.Y <= TargetButton.ActualHeight;
-        if (!_waitingForClick && releasedOnButton)
+        var menu = new ContextMenu
         {
-            _waitingForClick = true;
-            ViewModel?.AnnounceTargetMode();
-            return;
+            PlacementTarget = QuickFilterButton,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+        };
+
+        foreach (var filter in Enum.GetValues<QuickFilter>())
+        {
+            menu.Items.Add(new MenuItem
+            {
+                Header = QuickFilters.Label(filter),
+                ToolTip = QuickFilters.Hint(filter),
+                IsChecked = viewModel.QuickFilter == filter,
+                Command = viewModel.SetQuickFilterCommand,
+                CommandParameter = filter,
+            });
+
+            if (filter == QuickFilter.All)
+            {
+                menu.Items.Add(new Separator());
+            }
         }
 
-        EndTargeting();
-        ViewModel?.LocateWindowUnderCursor();
-    }
-
-    private void OnTargetLostCapture(object sender, MouseEventArgs e)
-    {
-        if (_targeting && Mouse.Captured != TargetButton)
-        {
-            EndTargeting();
-        }
-    }
-
-    /// <summary>Escape cancels target mode.</summary>
-    private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Escape && _targeting)
-        {
-            EndTargeting();
-            e.Handled = true;
-        }
-    }
-
-    private void EndTargeting()
-    {
-        _targeting = false;
-        _waitingForClick = false;
-        Mouse.OverrideCursor = null;
-        if (Mouse.Captured == TargetButton)
-        {
-            Mouse.Capture(null);
-        }
+        menu.IsOpen = true;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

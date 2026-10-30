@@ -8,7 +8,7 @@ namespace RigUninstaller.ViewModels;
 /// <summary>One entry of the open-windows list: what the window says, its exe, and the installed program it belongs to (if any).</summary>
 public sealed record OpenWindowChoice(string Title, string ExePath, string? ProgramName);
 
-/// <summary>Right-click actions, tags, CSV export, winget, Defender and target mode.</summary>
+/// <summary>Right-click actions, tags, CSV export, winget, Defender and the open-windows list.</summary>
 public sealed partial class MainViewModel
 {
     private IReadOnlyDictionary<string, WingetPackage> _wingetMatches = new Dictionary<string, WingetPackage>();
@@ -44,7 +44,7 @@ public sealed partial class MainViewModel
 
     public AsyncRelayCommand WingetUpdateCommand { get; private set; } = null!;
 
-    /// <summary>Raised after target mode found a program, so the grid can scroll to it.</summary>
+    /// <summary>Raised after the open-windows list found a program, so the grid can scroll to it.</summary>
     public event Action<ProgramRowViewModel>? RowRevealRequested;
 
     private void InitializeTools()
@@ -102,7 +102,8 @@ public sealed partial class MainViewModel
                 row.Insight = insight;
             }
 
-            if (SortColumn == SortColumn.LastUsed)
+            // The sort order and two of the quick filters depend on what the check just found out.
+            if (SortColumn == SortColumn.LastUsed || QuickFilter is QuickFilter.NotUsedLately or QuickFilter.Broken)
             {
                 RebuildRows();
             }
@@ -337,27 +338,8 @@ public sealed partial class MainViewModel
             : $"winget finished updating {program.Name} (exit code {result.ExitCode}).");
     }
 
-    /// <summary>Shown after a plain click on the crosshair button: the next click picks the window.</summary>
-    public void AnnounceTargetMode() =>
-        SetNote("Target mode: now click the window you want to find. Press Esc to cancel.");
-
     /// <summary>
-    /// Target mode: the user drops the crosshair on any window. The program that owns it is found and selected.
-    /// </summary>
-    public void LocateWindowUnderCursor()
-    {
-        var exe = _services.WindowProbe.GetProcessPathAtCursor();
-        if (exe is null)
-        {
-            SetNote("Target mode: that window is not a program I can identify (it may be this app, or Windows).");
-            return;
-        }
-
-        LocateProgramOfExe(exe);
-    }
-
-    /// <summary>
-    /// The no-aiming way: every window open right now, each matched to an installed program (matched ones first).
+    /// Every window open right now, each matched to an installed program (matched ones first).
     /// </summary>
     public IReadOnlyList<OpenWindowChoice> GetOpenWindowChoices() =>
         _services.WindowProbe.ListOpenWindows()
@@ -373,21 +355,27 @@ public sealed partial class MainViewModel
         var program = ProgramLocator.Find(exe, _programs, _services.Guard);
         if (program is null)
         {
-            SetNote($"Target mode: {Path.GetFileName(exe)} does not belong to an installed program in the list.");
-            _log.Info($"Target mode: no installed program for {exe}");
+            SetNote($"Open windows: {Path.GetFileName(exe)} does not belong to an installed program in the list.");
+            _log.Info($"Open windows: no installed program for {exe}");
             return;
         }
 
+        // A search or quick filter that hides the program is switched off, so the row can be shown.
         if (SearchText.Length > 0 && !_rows.Any(r => r.Program == program))
         {
             SearchText = string.Empty;
         }
 
+        if (IsQuickFilterActive && !_rows.Any(r => r.Program == program))
+        {
+            SetQuickFilter(QuickFilter.All);
+        }
+
         var row = _rowCache[program];
         SelectedRow = row;
         RowRevealRequested?.Invoke(row);
-        SetNote($"Target mode: {Path.GetFileName(exe)} belongs to {program.Name}.");
-        _log.Info($"Target mode: {exe} -> {program.Name}");
+        SetNote($"Open windows: {Path.GetFileName(exe)} belongs to {program.Name}.");
+        _log.Info($"Open windows: {exe} -> {program.Name}");
     }
 
     /// <summary>Runs an external action; a failure becomes a message instead of a crash.</summary>
