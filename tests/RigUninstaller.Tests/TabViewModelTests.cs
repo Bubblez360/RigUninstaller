@@ -312,4 +312,18 @@ public class WindowProbeTests
 
         Assert.True(path is null || Path.IsPathRooted(path));
     }
+
+    [Fact]
+    public void Listing_open_windows_returns_titled_windows_with_real_exe_paths_and_no_duplicates()
+    {
+        // Read-only: asks Windows which windows are open; the content depends on the machine.
+        var windows = new WindowProbe().ListOpenWindows();
+
+        Assert.All(windows, w =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(w.Title));
+            Assert.True(Path.IsPathRooted(w.ExePath));
+        });
+        Assert.Equal(windows.Count, windows.Select(w => w.ExePath.ToLowerInvariant()).Distinct().Count());
+    }
 }

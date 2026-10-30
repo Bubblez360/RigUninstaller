@@ -501,6 +501,31 @@ public class MainViewModelFeatureTests : VmTestBase
         Assert.Null(vm.SelectedRow);
     }
 
+    [Fact]
+    public async Task Open_windows_list_puts_matched_programs_first_and_picking_one_selects_it()
+    {
+        var vm = await ScannedAsync(Program("Alpha", location: @"C:\Program Files\Alpha"), Program("Beta", location: @"C:\Program Files\Beta"));
+        _windowProbe.Windows.Add(new OpenWindow("Some folder", @"C:\Windows\explorer.exe"));
+        _windowProbe.Windows.Add(new OpenWindow("Beta - notes", @"C:\Program Files\Beta\beta.exe"));
+
+        var choices = vm.GetOpenWindowChoices();
+
+        Assert.Equal(new string?[] { "Beta", null }, choices.Select(c => c.ProgramName).ToArray());
+
+        vm.SelectProgramOfWindow(choices[0]);
+
+        Assert.Equal("Beta", vm.SelectedRow?.Name);
+        Assert.Contains("beta.exe belongs to Beta", vm.StatusText);
+    }
+
+    [Fact]
+    public async Task Open_windows_list_is_empty_when_no_window_is_open()
+    {
+        var vm = await ScannedAsync(Program("Alpha", location: @"C:\Program Files\Alpha"));
+
+        Assert.Empty(vm.GetOpenWindowChoices());
+    }
+
     // ---- right-click actions ----
 
     [Fact]

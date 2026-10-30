@@ -200,12 +200,104 @@ public interface IWindowProbe
 {
     /// <summary>Path of the exe that owns the window under the mouse. Null for this app or when it cannot be read.</summary>
     string? GetProcessPathAtCursor();
+
+    /// <summary>The windows you can see on the desktop right now, one per program, topmost first. No aiming needed.</summary>
+    IReadOnlyList<OpenWindow> ListOpenWindows();
 }
+
+/// <summary>One open window: its title and the exe that owns it.</summary>
+public sealed record OpenWindow(string Title, string ExePath);
 
 public sealed class WindowProbe : IWindowProbe
 {
     private const uint GaRoot = 2;
+    private const uint GwOwner = 4;
     private const uint ProcessQueryLimitedInformation = 0x1000;
+    private const int GwlExStyle = -20;
+    private const int WsExToolWindow = 0x80;
+    private const int WsExAppWindow = 0x40000;
+    private const int DwmaCloaked = 14;
+
+    public IReadOnlyList<OpenWindow> ListOpenWindows()
+    {
+        var found = new List<OpenWindow>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        NativeMethods.EnumWindows((window, _) =>
+        {
+            if (!IsUserFacing(window))
+            {
+                return true;
+            }
+
+            var title = ReadTitle(window);
+            NativeMethods.GetWindowThreadProcessId(window, out var processId);
+            if (title.Length == 0 || processId == 0 || processId == Environment.ProcessId)
+            {
+                return true;
+            }
+
+            // One entry per program: the first (topmost) window of each exe is the one shown.
+            if (ReadImagePath(processId) is { } path && seen.Add(path))
+            {
+                found.Add(new OpenWindow(title, path));
+            }
+
+            return true;
+        }, IntPtr.Zero);
+
+        return found;
+    }
+
+    // Visible, not owned by another window, not a tool palette and not a hidden virtual-desktop or Store-app shell window.
+    private static bool IsUserFacing(IntPtr window)
+    {
+        if (!NativeMethods.IsWindowVisible(window) || NativeMethods.GetWindow(window, GwOwner) != IntPtr.Zero)
+        {
+            return false;
+        }
+
+        var style = NativeMethods.GetWindowLong(window, GwlExStyle);
+        if ((style & WsExToolWindow) != 0 && (style & WsExAppWindow) == 0)
+        {
+            return false;
+        }
+
+        return NativeMethods.DwmGetWindowAttribute(window, DwmaCloaked, out var cloaked, sizeof(int)) != 0 || cloaked == 0;
+    }
+
+    private static string ReadTitle(IntPtr window)
+    {
+        var length = NativeMethods.GetWindowTextLength(window);
+        if (length <= 0)
+        {
+            return string.Empty;
+        }
+
+        var buffer = new StringBuilder(length + 1);
+        NativeMethods.GetWindowText(window, buffer, buffer.Capacity);
+        return buffer.ToString();
+    }
+
+    private static string? ReadImagePath(uint processId)
+    {
+        var handle = NativeMethods.OpenProcess(ProcessQueryLimitedInformation, false, processId);
+        if (handle == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        try
+        {
+            var buffer = new StringBuilder(1024);
+            var size = buffer.Capacity;
+            return NativeMethods.QueryFullProcessImageName(handle, 0, buffer, ref size) ? buffer.ToString() : null;
+        }
+        finally
+        {
+            NativeMethods.CloseHandle(handle);
+        }
+    }
 
     public string? GetProcessPathAtCursor()
     {
@@ -227,22 +319,7 @@ public sealed class WindowProbe : IWindowProbe
             return null;
         }
 
-        var handle = NativeMethods.OpenProcess(ProcessQueryLimitedInformation, false, processId);
-        if (handle == IntPtr.Zero)
-        {
-            return null;
-        }
-
-        try
-        {
-            var buffer = new StringBuilder(1024);
-            var size = buffer.Capacity;
-            return NativeMethods.QueryFullProcessImageName(handle, 0, buffer, ref size) ? buffer.ToString() : null;
-        }
-        finally
-        {
-            NativeMethods.CloseHandle(handle);
-        }
+        return ReadImagePath(processId);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -260,6 +337,31 @@ public sealed class WindowProbe : IWindowProbe
 
         [DllImport("user32.dll")]
         public static extern IntPtr WindowFromPoint(NativePoint point);
+
+        public delegate bool EnumWindowsProc(IntPtr window, IntPtr parameter);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr parameter);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindow(IntPtr window, uint command);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+        public static extern int GetWindowLong(IntPtr window, int index);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowTextLengthW")]
+        public static extern int GetWindowTextLength(IntPtr window);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "GetWindowTextW")]
+        public static extern int GetWindowText(IntPtr window, StringBuilder text, int maxCount);
+
+        [DllImport("dwmapi.dll")]
+        public static extern int DwmGetWindowAttribute(IntPtr window, int attribute, out int value, int size);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetAncestor(IntPtr window, uint flags);

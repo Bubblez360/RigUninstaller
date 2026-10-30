@@ -181,6 +181,21 @@
                                     </StackPanel>
                                 </Button>
 
+                                <!-- The no-aiming way to the same answer: pick from the windows that are open right now -->
+                                <Button x:Name="OpenWindowsButton" Style="{StaticResource AppButton}" Padding="12,6" Margin="0,0,8,0"
+                                        Click="OnOpenWindowsClick"
+                                        AutomationProperties.Name="Pick from open windows"
+                                        ToolTip="List the windows open right now and pick one. Its program is selected in the list.">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Open windows" />
+                                        <Path Data="M0,0 L4,4 L8,0" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.5" Width="8" Height="5"
+                                              Margin="8,1,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <Button.ContextMenu>
+                                        <ContextMenu />
+                                    </Button.ContextMenu>
+                                </Button>
+
                                 <!-- Less common helpers live in one menu instead of five buttons -->
                                 <Button x:Name="ToolsButton" Style="{StaticResource AppButton}" Padding="12,6" Click="OnToolsClick"
                                         AutomationProperties.Name="More tools" ToolTip="Install tracker, winget, export, bloatware list">

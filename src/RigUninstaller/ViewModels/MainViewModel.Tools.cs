@@ -5,6 +5,9 @@ using RigUninstaller.Services;
 
 namespace RigUninstaller.ViewModels;
 
+/// <summary>One entry of the open-windows list: what the window says, its exe, and the installed program it belongs to (if any).</summary>
+public sealed record OpenWindowChoice(string Title, string ExePath, string? ProgramName);
+
 /// <summary>Right-click actions, tags, CSV export, winget, Defender and target mode.</summary>
 public sealed partial class MainViewModel
 {
@@ -350,6 +353,23 @@ public sealed partial class MainViewModel
             return;
         }
 
+        LocateProgramOfExe(exe);
+    }
+
+    /// <summary>
+    /// The no-aiming way: every window open right now, each matched to an installed program (matched ones first).
+    /// </summary>
+    public IReadOnlyList<OpenWindowChoice> GetOpenWindowChoices() =>
+        _services.WindowProbe.ListOpenWindows()
+            .Select(w => new OpenWindowChoice(w.Title, w.ExePath, ProgramLocator.Find(w.ExePath, _programs, _services.Guard)?.Name))
+            .OrderBy(choice => choice.ProgramName is null)
+            .ToList();
+
+    /// <summary>Selects the program that owns the exe the user picked from the open-windows list.</summary>
+    public void SelectProgramOfWindow(OpenWindowChoice choice) => LocateProgramOfExe(choice.ExePath);
+
+    private void LocateProgramOfExe(string exe)
+    {
         var program = ProgramLocator.Find(exe, _programs, _services.Guard);
         if (program is null)
         {

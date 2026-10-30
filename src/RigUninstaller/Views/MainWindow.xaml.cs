@@ -110,6 +110,40 @@ public partial class MainWindow : Window
         }
     }
 
+    private const int OpenWindowTitleLimit = 60;
+
+    /// <summary>Lists the windows open right now; picking one selects its program. Programs not in the list are shown greyed out.</summary>
+    private void OnOpenWindowsClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel || OpenWindowsButton.ContextMenu is not { } menu)
+        {
+            return;
+        }
+
+        menu.Items.Clear();
+        foreach (var choice in viewModel.GetOpenWindowChoices())
+        {
+            var title = choice.Title.Length > OpenWindowTitleLimit ? choice.Title[..OpenWindowTitleLimit] + "…" : choice.Title;
+            var item = new MenuItem
+            {
+                Header = choice.ProgramName is null ? $"{title}  (not an installed program)" : $"{choice.ProgramName}  ·  {title}",
+                IsEnabled = choice.ProgramName is not null,
+                ToolTip = choice.ExePath,
+            };
+            item.Click += (_, _) => viewModel.SelectProgramOfWindow(choice);
+            menu.Items.Add(item);
+        }
+
+        if (menu.Items.Count == 0)
+        {
+            menu.Items.Add(new MenuItem { Header = "No open windows found", IsEnabled = false });
+        }
+
+        menu.PlacementTarget = OpenWindowsButton;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
     // The winget column stays out of the way until "Check winget" has something to put in it.
     private void ShowWingetColumn(bool visible) => WingetColumn.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
 

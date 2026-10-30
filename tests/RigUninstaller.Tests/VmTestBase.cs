@@ -97,7 +97,11 @@ internal sealed class FakeWindowProbe : IWindowProbe
 {
     public string? Path { get; set; }
 
+    public List<OpenWindow> Windows { get; } = new();
+
     public string? GetProcessPathAtCursor() => Path;
+
+    public IReadOnlyList<OpenWindow> ListOpenWindows() => Windows;
 }
 
 internal sealed class FakeFiles : IFileSystemProbe
